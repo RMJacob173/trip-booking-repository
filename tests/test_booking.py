@@ -8,6 +8,7 @@ from booking import (
     calculate_tax,
     get_price_category,
     format_booking_summary,
+    calculate_final_price,
 )
 
 
@@ -49,6 +50,24 @@ def test_format_booking_summary_contains_trip_name():
     assert "Paris Adventure" in result
 
 
+def test_calculate_final_price_basic():
+    """Calculate final price: $100/night × 3 nights × 2 guests, June, France.
+
+    Calculation: 600 (base) → 600 (no discount in June) → 600 + 120 (tax) = 720.
+    """
+    result = calculate_final_price(100, 3, 2, 6, "france")
+    assert result == 720.0
+
+
+def test_calculate_final_price_with_seasonal_discount():
+    """Verify seasonal discount is applied: January has 15% off.
+
+    Calculation: 600 (base) → 510 (15% off) → 510 + 51 (10% japan tax) = 561.
+    """
+    result = calculate_final_price(100, 3, 2, 1, "japan")
+    assert result == 561.0
+
+
 # ── Edge Case Tests ───────────────────────────────────────────────────────────
 
 def test_calculate_total_price_zero_nights_raises():
@@ -85,3 +104,27 @@ def test_calculate_tax_unknown_country_raises():
     """Unknown country must raise ValueError."""
     with pytest.raises(ValueError):
         calculate_tax(500, "mars")
+
+
+def test_calculate_final_price_zero_nights_raises():
+    """calculate_final_price must raise ValueError for zero nights."""
+    with pytest.raises(ValueError):
+        calculate_final_price(100, 0, 2, 6, "france")
+
+
+def test_calculate_final_price_zero_guests_raises():
+    """calculate_final_price must raise ValueError for zero guests."""
+    with pytest.raises(ValueError):
+        calculate_final_price(100, 3, 0, 6, "france")
+
+
+def test_calculate_final_price_invalid_month_raises():
+    """calculate_final_price must raise ValueError for invalid month."""
+    with pytest.raises(ValueError):
+        calculate_final_price(100, 3, 2, 13, "france")
+
+
+def test_calculate_final_price_unsupported_country_raises():
+    """calculate_final_price must raise ValueError for unsupported country."""
+    with pytest.raises(ValueError):
+        calculate_final_price(100, 3, 2, 6, "mars")
